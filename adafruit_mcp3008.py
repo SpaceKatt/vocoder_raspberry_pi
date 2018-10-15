@@ -7,6 +7,11 @@ import time
 import os
 import RPi.GPIO as GPIO
 
+import rtmidi
+
+from rtmidi.midiconstants import NOTE_OFF, NOTE_ON
+
+
 # import ctcsound
 
 GPIO.setmode(GPIO.BCM)
@@ -68,36 +73,54 @@ last_read = 0       # this keeps track of the last potentiometer value
 tolerance = 5       # to keep from being jittery we'll only change
                     # volume when the pot has moved more than 5 'counts'
 
-while True:
-    try:
-        # we'll assume that the pot didn't move
-        trim_pot_changed = False
+NOTE = 60  # middle C
+note_on = [NOTE_ON, NOTE, 112]
+note_off = [NOTE_OFF, NOTE, 0]
 
-        # read the analog pin
-        trim_pot = readadc(potentiometer_adc, SPICLK, SPIMOSI, SPIMISO, SPICS)
-        # how much has it changed since the last read?
-        pot_adjust = abs(trim_pot - last_read)
+midiout = rtmidi.MidiOut()
 
-        if DEBUG:
-                print("trim_pot:", trim_pot)
-                print("pot_adjust:", pot_adjust)
-                print("last_read", last_read)
+with (midiout.open_port(0) if midiout.get_ports() else
+      midiout.open_virtual_port("My virtual output")):
+    note_on = [NOTE_ON, NOTE, 112]
+    while True:
+        try:
+            midiout.send_message(note_off)
+            # we'll assume that the pot didn't move
+            trim_pot_changed = False
 
-        if ( pot_adjust > tolerance ):
-               trim_pot_changed = True
+            # read the analog pin
+            trim_pot = readadc(potentiometer_adc, SPICLK, SPIMOSI, SPIMISO, SPICS)
+            # how much has it changed since the last read?
+            pot_adjust = abs(trim_pot - last_read)
 
-        if DEBUG:
-                print("trim_pot_changed", trim_pot_changed)
+            if DEBUG:
+                    print("trim_pot:", trim_pot)
+                    print("pot_adjust:", pot_adjust)
+                    print("last_read", last_read)
 
-        time_delta = 0.05
+            if ( pot_adjust > tolerance ):
+                   trim_pot_changed = True
 
-        weight = 3.1459 * time_delta
-        last_read += weight * (trim_pot - last_read)
+            if DEBUG:
+                    print("trim_pot_changed", trim_pot_changed)
 
-        # hang out and do nothing for a half second
-        time.sleep(time_delta)
-    except KeyboardInterrupt:
-        print("Keyboard Interrupt! Stop the presses!")
-        print("Cleanup!")
-        GPIO.cleanup()
-        exit()
+            time_delta = 0.4
+
+            weight = 3.1459 * time_delta
+            last_read += weight * (trim_pot - last_read)
+
+            # hang out and play a note for a half second
+            NOTE = 60 + (trim_pot / 25.0)
+
+            note_on = [NOTE_ON, NOTE, 112]
+            note_off = [NOTE_OFF, NOTE, 0]
+
+            midiout.send_message(note_on)
+            time.sleep(time_delta)
+        except KeyboardInterrupt:
+            print("Keyboard Interrupt! Stop the presses!")
+            print("Cleanup!")
+            midiout.send_message(note_off)
+            del midiout
+            GPIO.cleanup()
+            exit()
