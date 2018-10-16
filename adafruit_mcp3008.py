@@ -9,7 +9,7 @@ import RPi.GPIO as GPIO
 
 import rtmidi
 
-from rtmidi.midiconstants import NOTE_OFF, NOTE_ON
+from rtmidi.midiconstants import NOTE_OFF, NOTE_ON, PITCH_BEND
 
 
 # import ctcsound
@@ -73,18 +73,50 @@ last_read = 0       # this keeps track of the last potentiometer value
 tolerance = 5       # to keep from being jittery we'll only change
                     # volume when the pot has moved more than 5 'counts'
 
-NOTE = 60  # middle C
-note_on = [NOTE_ON, NOTE, 112]
-note_off = [NOTE_OFF, NOTE, 0]
+NOTE = 84  # middle C is 60
+
+note_constant_on = [NOTE_ON, NOTE, 112]
+note_constant_off = [NOTE_OFF, NOTE, 0]
+
+
+PITCH_MIDDLE = 0x2000
+
+def pitch_bend_cmd(value):
+    # print(value)
+    middle = 1024 / 2
+    adjust =  13.38 * (value - middle)
+
+    pitch = int(adjust + PITCH_MIDDLE)
+
+    # print(value)
+    # print(value - middle)
+    # print(adjust)
+    # print(hex(pitch))
+
+    pitch &= 0x3FFF
+    lsb = pitch & 0x007F
+    pitch >>= 7
+    msb = pitch & 0x007F
+
+    # msb = int((0x7F - 0x25) / 0x7F * msb + 0x25)
+
+    # print(msb)
+    data = [lsb, msb]
+    return data
 
 midiout = rtmidi.MidiOut()
 
+time.sleep(0.5)
+
 with (midiout.open_port(0) if midiout.get_ports() else
       midiout.open_virtual_port("My virtual output")):
-    note_on = [NOTE_ON, NOTE, 112]
+    note_on = [PITCH_BEND, 0x00, 0x40]
+    # note_off = [NOTE_OFF, 0x50, 0x00]
+    midiout.send_message(note_constant_on)
+    trim_pot = 512
     while True:
         try:
-            midiout.send_message(note_off)
+            # midiout.send_message(note_off)
             # we'll assume that the pot didn't move
             trim_pot_changed = False
 
@@ -104,23 +136,29 @@ with (midiout.open_port(0) if midiout.get_ports() else
             if DEBUG:
                     print("trim_pot_changed", trim_pot_changed)
 
-            time_delta = 0.4
+            time_delta = 0.0001
 
-            weight = 3.1459 * time_delta
+            weight = 4.1459 * time_delta
             last_read += weight * (trim_pot - last_read)
 
-            # hang out and play a note for a half second
-            NOTE = 60 + (trim_pot / 25.0)
+            pitch_data = pitch_bend_cmd(last_read)
 
-            note_on = [NOTE_ON, NOTE, 112]
-            note_off = [NOTE_OFF, NOTE, 0]
+            # hang out and play a note for a half second
+            # NOTE = 60 + (trim_pot / 25.0)
+
+            note_on = [PITCH_BEND] + pitch_data
+
+            # print(trim_pot)
+            # print([hex(i) for i in note_on])
+            # note_off = [NOTE_OFF, NOTE, 0]
 
             midiout.send_message(note_on)
             time.sleep(time_delta)
         except KeyboardInterrupt:
             print("Keyboard Interrupt! Stop the presses!")
             print("Cleanup!")
-            midiout.send_message(note_off)
+            midiout.send_message(note_constant_off)
+            # midiout.send_message(note_off)
             del midiout
             GPIO.cleanup()
             exit()

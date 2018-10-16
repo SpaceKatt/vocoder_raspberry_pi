@@ -26,10 +26,12 @@ maxalloc 1, 12
 kbend   linseg 1, 6, .75
 kbend   port kbend, 0.001
 
+kpb     pchbend 0, 1600
+
         iamp = .2
         icps cpsmidi
 ;output Opcode   amp     freq    fnc         ;comment
-a1      oscil    .2,     icps,   gisine      ;OSC
+a1      oscil    .2,     icps + kpb,   gisine      ;OSC
         outs     a1,a1
         endin
 
