@@ -39,7 +39,7 @@ a1      oscil    .2,     icps + kpb,   gisine      ;OSC
 </CsInstruments>
 <CsScore>
 
-/*f 0 180; 16 10 1*/
+;/*f 0 180; 16 10 1*/
 
 </CsScore>
 </CsoundSynthesizer>
