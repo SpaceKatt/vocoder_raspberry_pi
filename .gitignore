@@ -1,1 +1,9 @@
+# vim tmp files
 *.swp
+
+# Audio files
+*.wav
+
+# file dumps
+null/
+test_null/
