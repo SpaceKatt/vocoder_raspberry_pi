@@ -1,6 +1,7 @@
 # Vocoder w/ Raspberry Pi Project
 
 Platform: Raspberry Pi 3 Model B
+
 OS: Raspbian
 
 Raspberry Pi MCP3008 driver code [inspired by Lady Ada's gist][adafruit-gist].
@@ -30,12 +31,14 @@ csound utils/get_device_list.csd
 1. Start vocoder in one terminal
 
 ```
+cd csound_vocoder
 csound voscil.csd
 ```
 
 2. Start MIDI controller in other terminal
 
 ```
+cd src/
 python3 adafruit_mcp3008.py
 ```
 
