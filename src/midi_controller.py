@@ -76,13 +76,11 @@ def readadc(adcnum):
 potentiometer_adc = 0;
 
 last_read = 0       # this keeps track of the last potentiometer value
-tolerance = 5       # to keep from being jittery we'll only change
-                    # volume when the pot has moved more than 5 'counts'
 
 NOTE = 60  # middle C is 60
 
-note_constant_on = [NOTE_ON, NOTE, 112]
-note_constant_off = [NOTE_OFF, NOTE, 0]
+NOTE_CONSTANT_ON = [NOTE_ON, NOTE, 112]
+NOTE_CONSTANT_OFF = [NOTE_OFF, NOTE, 0]
 
 
 PITCH_MIDDLE = 0x2000
@@ -106,24 +104,24 @@ def run_midi():
 
   time.sleep(0.5)
 
+  last_read = 0
+  tolerance = 5       # to keep from being jittery we'll only change
+                      # volume when the pot has moved more than 5 'counts'
+
   with (midiout.open_port(0) if midiout.get_ports() else
         midiout.open_virtual_port("My virtual output")):
 
       note_on = [PITCH_BEND, 0x00, 0x40]
 
       # note_off = [NOTE_OFF, 0x50, 0x00]
-      midiout.send_message(note_constant_on)
+      midiout.send_message(NOTE_CONSTANT_ON)
 
       trim_pot = 512
 
       while True:
           try:
-              # midiout.send_message(note_off)
-              # we'll assume that the pot didn't move
-              trim_pot_changed = False
-
               # read the analog pin
-              trim_pot = readadc(potentiometer_adc, SPICLK, SPIMOSI, SPIMISO, SPICS)
+              trim_pot = readadc(potentiometer_adc)
               # how much has it changed since the last read?
               pot_adjust = abs(trim_pot - last_read)
 
@@ -132,8 +130,8 @@ def run_midi():
                       print("pot_adjust:", pot_adjust)
                       print("last_read", last_read)
 
-              if ( pot_adjust > tolerance ):
-                     trim_pot_changed = True
+              if ( pot_adjust < tolerance ):
+                  continue
 
               if DEBUG:
                       print("trim_pot_changed", trim_pot_changed)
@@ -150,19 +148,18 @@ def run_midi():
 
               note_on = [PITCH_BEND] + pitch_data
 
-              # print(trim_pot)
-              # print([hex(i) for i in note_on])
-              # note_off = [NOTE_OFF, NOTE, 0]
-
               midiout.send_message(note_on)
+
               time.sleep(time_delta)
           except KeyboardInterrupt:
               print("Keyboard Interrupt! Stop the presses!")
               print("Cleanup!")
-              midiout.send_message(note_constant_off)
-              # midiout.send_message(note_off)
+
+              midiout.send_message(NOTE_CONSTANT_OFF)
+
               del midiout
               GPIO.cleanup()
+
               exit()
 
 if __name__ == '__main__':
