@@ -13,6 +13,7 @@ kr     = 256
 nchnls = 2
 0dbfs  = 1
 
+gisaw   ftgen   1, 0, 2048, 10, 1, 0.5, 0.3, 0.25, 0.2  ;sawtooth-like
 gisine ftgen 0, 0, 4096, 10, 1
 
 maxalloc 1, 12
@@ -31,7 +32,8 @@ kpb     pchbend 0, 1600
         iamp = .2
         icps cpsmidi
 ;output Opcode   amp     freq    fnc         ;comment
-a1      oscil    .2,     icps + kpb,   gisine      ;OSC
+;a1      oscil    .2,     icps + kpb,   gisine      ;OSC
+a1      oscil    .2,     icps + kpb,   gisaw      ;OSC
         outs     a1,a1
         endin
 

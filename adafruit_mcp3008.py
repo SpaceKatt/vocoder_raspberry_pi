@@ -73,7 +73,7 @@ last_read = 0       # this keeps track of the last potentiometer value
 tolerance = 5       # to keep from being jittery we'll only change
                     # volume when the pot has moved more than 5 'counts'
 
-NOTE = 84  # middle C is 60
+NOTE = 60  # middle C is 60
 
 note_constant_on = [NOTE_ON, NOTE, 112]
 note_constant_off = [NOTE_OFF, NOTE, 0]
@@ -84,7 +84,7 @@ PITCH_MIDDLE = 0x2000
 def pitch_bend_cmd(value):
     # print(value)
     middle = 1024 / 2
-    adjust =  13.38 * (value - middle)
+    adjust =  value - middle
 
     pitch = int(adjust + PITCH_MIDDLE)
 

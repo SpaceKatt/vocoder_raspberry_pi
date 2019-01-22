@@ -2,7 +2,7 @@
 <CsoundSynthesizer>
 <CsOptions>
 
--iadc:sysdefault:CARD=Device -odac:hw:2,0 -+rtmidi=portmidi -+rtaudio=alsa -B2048 -b2048 -M0
+-iadc:hw:2,0 -odac:hw:1,0 -+rtmidi=portmidi -+rtaudio=alsa -B2048 -b2048 -M0
 ;-odac:hw:2,0 -+rtmidi=virtual -+rtaudio=alsa -B2048 -b2048 -Ma
 
 </CsOptions>
@@ -53,7 +53,7 @@ fexc pvsanal asig, 1024, 256, 1024, 1   ;analyse excitation signal
 ftps pvsvoc  famp, fexc, 1, 1       ;cross it
 
 atps pvsynth ftps           ;synthesise it                      
-     fout  "test_render.wav", 18, atps
+;     fout  "test_render.wav", 18, atps
      outs atps
      endin
 
